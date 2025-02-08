@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique @db.VarChar(255)
+  name        String?   @db.VarChar(100)
+  password    String    @db.VarChar(255)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime? @map("deleted_at")
+  role        Role      @default(STUDENT)
+  sessions    Session[]
+  enrollments Enrollment[]
+  submissions Submission[]
+
+  @@map("users")
+  @@index([email])
+}
+
+model Session {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  startTime   DateTime
+  endTime     DateTime
+  mentorId    String
+  mentor      User      @relation(fields: [mentorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  enrollments Enrollment[]
+
+  @@map("sessions")
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  sessionId String
+  session   Session  @relation(fields: [sessionId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("enrollments")
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  problemId String
+  code      String
+  language  String
+  status    String
+  createdAt DateTime @default(now())
+
+  @@map("submissions")
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
